@@ -31,6 +31,7 @@ func TestKube2e(t *testing.T) {
 
 var namespace, version string
 var testRunnerPort int32
+
 var _ = BeforeSuite(func() {
 	// build and push images for test
 	version = helpers.TestVersion()

@@ -1,13 +1,11 @@
 package helpers
 
 import (
-	"bytes"
 	"fmt"
-	"io"
+	"github.com/solo-io/gloo/install/helm/gloo/generate"
 	"io/ioutil"
 	"os"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/solo-io/solo-kit/pkg/errors"
@@ -22,11 +20,10 @@ func DeployGlooWithHelm(namespace, imageVersion string, enableKnative, verbose b
 		return err
 	}
 	defer os.Remove(values.Name())
-	if _, err := io.Copy(values, GlooHelmValues(namespace, imageVersion, enableKnative)); err != nil {
+	if err := WriteGlooHelmValues(values, namespace, imageVersion, enableKnative); err != nil {
 		return err
 	}
-	err = values.Close()
-	if err != nil {
+	if err = values.Close(); err != nil {
 		return err
 	}
 
@@ -47,70 +44,28 @@ func DeployGlooWithHelm(namespace, imageVersion string, enableKnative, verbose b
 	return nil
 }
 
-func GlooHelmValues(namespace, version string, enableKnative bool) io.Reader {
-	b := &bytes.Buffer{}
-
-	err := template.Must(template.New("gloo-helm-values").Parse(`
-# note: these values must remain consistent with 
-# install/helm/gloo/values.yaml
-namespace:
-  create: false
-rbac:
-  create: true
-
-settings:
-  integrations:
-    knative:
-      enabled: {{ .EnableKnative }}
-      proxy:
-        image: soloio/gloo-envoy-wrapper:{{ .Version }}
-        httpPort: 80
-        httpsPort: 443
-        replicas: 1
-
-  # namespaces that Gloo should watch. this includes watches set for pods, services, as well as CRD configuration objects
-  watchNamespaces: []
-  # the namespace that Gloo should write discovery data (Upstreams)
-  writeNamespace: {{ .Namespace }}
-
-deployment:
-  imagePullPolicy: IfNotPresent
-  gloo:
-    xdsPort: 9977
-    image: soloio/gloo:{{ .Version }}
-    replicas: 1
-  discovery:
-    image: soloio/discovery:{{ .Version }}
-    replicas: 1
-  gateway:
-    image: soloio/gateway:{{ .Version }}
-    replicas: 1
-  gatewayProxy:
-    image: soloio/gloo-envoy-wrapper:{{ .Version }}
-    httpPort: 8080
-    replicas: 1
-  ingress:
-    image: soloio/ingress:{{ .Version }}
-    replicas: 1
-  ingressProxy:
-    image: soloio/gloo-envoy-wrapper:{{ .Version }}
-    httpPort: 80
-    httpsPort: 443
-    replicas: 1
-`)).Execute(b, struct {
-		Version       string
-		Namespace     string
-		EnableKnative bool
-	}{
-		Version:       version,
-		Namespace:     namespace,
-		EnableKnative: enableKnative,
-	})
+func WriteGlooHelmValues(file *os.File, namespace, version string, enableKnative bool) error {
+	glooValuesTemplate, err := generate.ReadGlooValuesTemplate()
 	if err != nil {
-		panic(err)
+		return err
 	}
 
-	return b
+	glooValuesTemplate.Discovery.Deployment.Image.Tag = version
+	glooValuesTemplate.Gateway.Deployment.Image.Tag = version
+	glooValuesTemplate.GatewayProxy.Deployment.Image.Tag = version
+	glooValuesTemplate.Gloo.Deployment.Image.Tag = version
+	glooValuesTemplate.Ingress.Deployment.Image.Tag = version
+	glooValuesTemplate.IngressProxy.Deployment.Image.Tag = version
+	glooValuesTemplate.Settings.WriteNamespace = namespace
+
+	if enableKnative {
+		generate.UpdateGlooTemplateWithKnativeTemplate(glooValuesTemplate)
+		glooValuesTemplate.Settings.Integrations.Knative.Proxy.Image.Tag = version
+	}
+
+	generate.WriteYaml(glooValuesTemplate, file.Name())
+
+	return nil
 }
 
 var glooPodLabels = []string{
