@@ -23,6 +23,7 @@ type Top struct {
 	Interactive bool
 	File        string
 	Output      string
+	LogToStdout string
 	Ctx         context.Context
 }
 
