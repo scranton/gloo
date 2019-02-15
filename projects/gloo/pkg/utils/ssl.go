@@ -9,18 +9,28 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-func ResolveUpstreamSslConfig(s *v1.UpstreamSslConfig, secrets v1.SecretList) (*envoyauth.UpstreamTlsContext, error) {
-	if common, err := ResolveCommonSslConfig(s, secrets); err == nil {
+type SslConfigTranslator struct {
+	secrets v1.SecretList
+}
+
+func NewSslConfigTranslator(secrets v1.SecretList) *SslConfigTranslator {
+	return &SslConfigTranslator{
+		secrets: secrets,
+	}
+}
+
+func (s *SslConfigTranslator) ResolveUpstreamSslConfig(uc *v1.UpstreamSslConfig) (*envoyauth.UpstreamTlsContext, error) {
+	if common, err := s.ResolveCommonSslConfig(uc); err == nil {
 		return &envoyauth.UpstreamTlsContext{
 			CommonTlsContext: common,
-			Sni:              s.Sni,
+			Sni:              uc.Sni,
 		}, nil
 	} else {
 		return nil, err
 	}
 }
-func ResolveDownstreamSslConfig(s *v1.SslConfig, secrets v1.SecretList) (*envoyauth.DownstreamTlsContext, error) {
-	if common, err := ResolveCommonSslConfig(s, secrets); err == nil {
+func (s *SslConfigTranslator) ResolveDownstreamSslConfig(dc *v1.SslConfig) (*envoyauth.DownstreamTlsContext, error) {
+	if common, err := s.ResolveCommonSslConfig(dc); err == nil {
 		var requireClientCert *gogo_types.BoolValue
 		if common.ValidationContextType != nil {
 			requireClientCert = &gogo_types.BoolValue{Value: true}
@@ -39,72 +49,56 @@ type CertSource interface {
 	GetSslFiles() *v1.SSLFiles
 }
 
-func ResolveCommonSslConfig(s CertSource, secrets v1.SecretList) (*envoyauth.CommonTlsContext, error) {
+func dataSourceGenerator(inlineDataSource bool) func(s string) *envoycore.DataSource {
+	return func(s string) *envoycore.DataSource {
+		if !inlineDataSource {
+			return &envoycore.DataSource{
+				Specifier: &envoycore.DataSource_Filename{
+					Filename: s,
+				},
+			}
+		}
+		return &envoycore.DataSource{
+			Specifier: &envoycore.DataSource_InlineString{
+				InlineString: s,
+			},
+		}
+	}
+}
+
+func (s *SslConfigTranslator) ResolveCommonSslConfig(cs CertSource) (*envoyauth.CommonTlsContext, error) {
 	var (
 		certChain, privateKey, rootCa string
 		// if using a Secret ref, we will inline the certs in the tls config
 		inlineDataSource bool
 	)
 
-	if sslSecrets := s.GetSecretRef(); sslSecrets != nil {
+	if sslSecrets := cs.GetSecretRef(); sslSecrets != nil {
 		var err error
 		inlineDataSource = true
 		ref := sslSecrets
-		certChain, privateKey, rootCa, err = GetSslSecrets(*ref, secrets)
+		certChain, privateKey, rootCa, err = getSslSecrets(*ref, s.secrets)
 		if err != nil {
 			return nil, err
 		}
-	} else if sslSecrets := s.GetSslFiles(); sslSecrets != nil {
+	} else if sslSecrets := cs.GetSslFiles(); sslSecrets != nil {
 		certChain, privateKey, rootCa = sslSecrets.TlsCert, sslSecrets.TlsKey, sslSecrets.RootCa
 	} else {
 		return nil, errors.New("no certificate information found")
 	}
 
+	dataSource := dataSourceGenerator(inlineDataSource)
+
 	var certChainData, privateKeyData, rootCaData *envoycore.DataSource
-	if !inlineDataSource {
-		if certChain != "" {
-			certChainData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_Filename{
-					Filename: certChain,
-				},
-			}
-		}
-		if privateKey != "" {
-			privateKeyData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_Filename{
-					Filename: privateKey,
-				},
-			}
-		}
-		if rootCa != "" {
-			rootCaData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_Filename{
-					Filename: rootCa,
-				},
-			}
-		}
-	} else {
-		if certChain != "" {
-			certChainData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_InlineString{
-					InlineString: certChain,
-				},
-			}
-		}
-		if privateKey != "" {
-			privateKeyData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_InlineString{
-					InlineString: privateKey,
-				},
-			}
-		}
-		if rootCa != "" {
-			rootCaData = &envoycore.DataSource{
-				Specifier: &envoycore.DataSource_InlineString{
-					InlineString: rootCa,
-				},
-			}
-		}
+
+	if certChain != "" {
+		certChainData = dataSource(certChain)
+	}
+	if privateKey != "" {
+		privateKeyData = dataSource(privateKey)
+	}
+	if rootCa != "" {
+		rootCaData = dataSource(rootCa)
 	}
 
 	tlsContext := &envoyauth.CommonTlsContext{
@@ -135,7 +129,7 @@ func ResolveCommonSslConfig(s CertSource, secrets v1.SecretList) (*envoyauth.Com
 	return tlsContext, nil
 }
 
-func GetSslSecrets(ref core.ResourceRef, secrets v1.SecretList) (string, string, string, error) {
+func getSslSecrets(ref core.ResourceRef, secrets v1.SecretList) (string, string, string, error) {
 	secret, err := secrets.Find(ref.Strings())
 	if err != nil {
 		return "", "", "", errors.Wrapf(err, "SSL secret not found")

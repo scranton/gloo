@@ -109,9 +109,11 @@ func computeFilterChainsFromSslConfig(snap *v1.ApiSnapshot, listener *v1.Listene
 	}
 
 	var secureFilterChains []envoylistener.FilterChain
+
+	sslCfgTranslator := utils.NewSslConfigTranslator(snap.Secrets.List())
 	for _, sslConfig := range listener.SslConfiguations {
 		// get secrets
-		downstreamConfig, err := utils.ResolveDownstreamSslConfig(sslConfig, snap.Secrets.List())
+		downstreamConfig, err := sslCfgTranslator.ResolveDownstreamSslConfig(sslConfig)
 		if err != nil {
 			report(err, "invalid secrets for listener %v", listener.Name)
 			continue
