@@ -142,6 +142,26 @@ var _ = Describe("Ssl", func() {
 			Entry("upstreamCfg", func() CertSource { return upstreamCfg }),
 			Entry("downstreamCfg", func() CertSource { return downstreamCfg }),
 		)
+
+		It("should set require client cert for downstream config", func() {
+			cfg, err := configTranslator.ResolveDownstreamSslConfig(downstreamCfg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cfg.RequireClientCertificate.GetValue()).To(BeTrue())
+		})
+
+		It("should not set require client cert for downstream config with no rootca", func() {
+			tlsSecret.RootCa = ""
+			cfg, err := configTranslator.ResolveDownstreamSslConfig(downstreamCfg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cfg.RequireClientCertificate.GetValue()).To(BeFalse())
+		})
+
+		It("should set sni for upstream config", func() {
+			cfg, err := configTranslator.ResolveUpstreamSslConfig(upstreamCfg)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cfg.Sni).To(Equal("test.com"))
+		})
+
 	})
 })
 
