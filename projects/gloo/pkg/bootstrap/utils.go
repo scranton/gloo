@@ -79,8 +79,9 @@ func SecretFactoryForSettings(ctx context.Context,
 			return nil, errors.Wrapf(err, "initializing kube cfg clientset and core cache")
 		}
 		return &factory.KubeSecretClientFactory{
-			Clientset: *clientset,
-			Cache:     *kubeCoreCache,
+			Clientset:       *clientset,
+			Cache:           *kubeCoreCache,
+			SecretConverter: new(tlsSecretConverter),
 		}, nil
 	case *v1.Settings_VaultSecretSource:
 		return nil, errors.Errorf("vault configuration not implemented")
