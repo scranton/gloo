@@ -1,4 +1,4 @@
-package upstream_test
+package upstreamssl_test
 
 import (
 	"testing"
