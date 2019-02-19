@@ -8,7 +8,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/solo-io/gloo/projects/gloo/pkg/plugins/upstream"
+	. "github.com/solo-io/gloo/projects/gloo/pkg/plugins/upstreamssl"
 )
 
 var _ = Describe("Plugin", func() {
