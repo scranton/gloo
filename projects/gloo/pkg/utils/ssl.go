@@ -20,28 +20,28 @@ func NewSslConfigTranslator(secrets v1.SecretList) *SslConfigTranslator {
 }
 
 func (s *SslConfigTranslator) ResolveUpstreamSslConfig(uc *v1.UpstreamSslConfig) (*envoyauth.UpstreamTlsContext, error) {
-	if common, err := s.ResolveCommonSslConfig(uc); err == nil {
-		return &envoyauth.UpstreamTlsContext{
-			CommonTlsContext: common,
-			Sni:              uc.Sni,
-		}, nil
-	} else {
+	common, err := s.ResolveCommonSslConfig(uc)
+	if err != nil {
 		return nil, err
 	}
+	return &envoyauth.UpstreamTlsContext{
+		CommonTlsContext: common,
+		Sni:              uc.Sni,
+	}, nil
 }
 func (s *SslConfigTranslator) ResolveDownstreamSslConfig(dc *v1.SslConfig) (*envoyauth.DownstreamTlsContext, error) {
-	if common, err := s.ResolveCommonSslConfig(dc); err == nil {
-		var requireClientCert *gogo_types.BoolValue
-		if common.ValidationContextType != nil {
-			requireClientCert = &gogo_types.BoolValue{Value: true}
-		}
-		return &envoyauth.DownstreamTlsContext{
-			CommonTlsContext:         common,
-			RequireClientCertificate: requireClientCert,
-		}, nil
-	} else {
+	common, err := s.ResolveCommonSslConfig(dc)
+	if err != nil {
 		return nil, err
 	}
+	var requireClientCert *gogo_types.BoolValue
+	if common.ValidationContextType != nil {
+		requireClientCert = &gogo_types.BoolValue{Value: true}
+	}
+	return &envoyauth.DownstreamTlsContext{
+		CommonTlsContext:         common,
+		RequireClientCertificate: requireClientCert,
+	}, nil
 }
 
 type CertSource interface {
