@@ -6,6 +6,7 @@ import (
 
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube/cache"
 
+	kubeconverters "github.com/solo-io/gloo/projects/gloo/pkg/api/converters/kube"
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/factory"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
@@ -81,7 +82,7 @@ func SecretFactoryForSettings(ctx context.Context,
 		return &factory.KubeSecretClientFactory{
 			Clientset:       *clientset,
 			Cache:           *kubeCoreCache,
-			SecretConverter: new(tlsSecretConverter),
+			SecretConverter: new(kubeconverters.TLSSecretConverter),
 		}, nil
 	case *v1.Settings_VaultSecretSource:
 		return nil, errors.Errorf("vault configuration not implemented")

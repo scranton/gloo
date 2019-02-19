@@ -1,7 +1,8 @@
-package bootstrap
+package kubeconverters
 
 import (
 	"context"
+	"errors"
 
 	v1 "github.com/solo-io/gloo/projects/gloo/pkg/api/v1"
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kubesecret"
@@ -11,9 +12,9 @@ import (
 	kubev1 "k8s.io/api/core/v1"
 )
 
-type tlsSecretConverter struct{}
+type TLSSecretConverter struct{}
 
-func (t *tlsSecretConverter) FromKubeSecret(ctx context.Context, rc *kubesecret.ResourceClient, secret *kubev1.Secret) (resources.Resource, error) {
+func (t *TLSSecretConverter) FromKubeSecret(ctx context.Context, rc *kubesecret.ResourceClient, secret *kubev1.Secret) (resources.Resource, error) {
 
 	if secret.Type == kubev1.SecretTypeTLS {
 		return &v1.Secret{
@@ -29,7 +30,8 @@ func (t *tlsSecretConverter) FromKubeSecret(ctx context.Context, rc *kubesecret.
 
 	return rc.FromKubeSecret(secret)
 }
-func (t *tlsSecretConverter) ToKubeSecret(ctx context.Context, rc *kubesecret.ResourceClient, resource resources.Resource) (*kubev1.Secret, error) {
 
-	return rc.ToKubeSecret(ctx, resource)
+func (t *TLSSecretConverter) ToKubeSecret(ctx context.Context, rc *kubesecret.ResourceClient, resource resources.Resource) (*kubev1.Secret, error) {
+
+	return nil, errors.New("cannot convert gloo secret to kube secret - not implemented")
 }
