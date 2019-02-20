@@ -141,7 +141,7 @@ var glooPodLabels = []string{
 	"gloo=gloo",
 	"gloo=discovery",
 	"gloo=gateway",
-	"gloo=ingress",
+	"gloo=gateway-proxy",
 }
 
 func WaitGlooPods(timeout, interval time.Duration) error {
@@ -158,7 +158,7 @@ func WaitPodsRunning(ctx context.Context, interval time.Duration, labels ...stri
 		return strings.Contains(output, "Running") || strings.Contains(output, "ContainerCreating")
 	}
 	for _, label := range labels {
-		if err := WaitPodStatus(ctx, interval, label, "Running", finished); err != nil {
+		if err := WaitPodStatus(ctx, interval, label, "Running or ContainerCreating", finished); err != nil {
 			return err
 		}
 	}

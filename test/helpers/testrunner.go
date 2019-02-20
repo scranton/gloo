@@ -33,8 +33,9 @@ func DeployTestRunner(namespace, image string, port int32) error {
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
-					Image: image,
-					Name:  "testrunner",
+					Image:           image,
+					ImagePullPolicy: v1.PullIfNotPresent,
+					Name:            "testrunner",
 				},
 			},
 		},
