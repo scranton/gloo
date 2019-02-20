@@ -31,7 +31,6 @@ var _ = Describe("Kube2e: gateway", func() {
 	var (
 		ctx        context.Context
 		cancel     context.CancelFunc
-		namespace  string
 		cfg        *rest.Config
 		kubeClient kubernetes.Interface
 
