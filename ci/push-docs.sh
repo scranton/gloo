@@ -15,7 +15,7 @@ for line in $CONFIG; do
 done
 
 github_token_no_spaces=$(echo $GITHUB_TOKEN | tr -d '[:space:]')
-branch="docs-$tag"
+branch="docs-gloo-$tag"
 
 git clone https://github.com/solo-io/gloo-docs.git
 (cd gloo-docs && git checkout -b $branch)
@@ -24,25 +24,25 @@ git clone https://github.com/solo-io/gloo-docs.git
 if [ -d "gloo-docs/docs/v1/github.com/solo-io/gloo" ]; then
 	rm -r gloo-docs/docs/v1/github.com/solo-io/gloo
 fi
-cp -r projects/gloo/doc/docs/v1/github.com/solo-io/gloo gloo-docs/docs/v1/github.com/solo-io/gloo
+cp -r docs/v1/github.com/solo-io/gloo gloo-docs/docs/v1/github.com/solo-io/gloo
 
 # Solo Kit
 if [ -d "gloo-docs/docs/v1/github.com/solo-io/solo-kit" ]; then
 	rm -r gloo-docs/docs/v1/github.com/solo-io/solo-kit
 fi
-cp -r projects/gloo/doc/docs/v1/github.com/solo-io/solo-kit gloo-docs/docs/v1/github.com/solo-io/solo-kit
+cp -r docs/v1/github.com/solo-io/solo-kit gloo-docs/docs/v1/github.com/solo-io/solo-kit
 
 # Gogoproto
 if [ -d "gloo-docs/docs/v1/gogoproto" ]; then
 	rm -r gloo-docs/docs/v1/gogoproto
 fi
-cp -r projects/gloo/doc/docs/v1/gogoproto gloo-docs/docs/v1/gogoproto
+cp -r docs/v1/gogoproto gloo-docs/docs/v1/gogoproto
 
 # Google
 if [ -d "gloo-docs/docs/v1/google" ]; then
 	rm -r gloo-docs/docs/v1/google
 fi
-cp -r projects/gloo/doc/docs/v1/google gloo-docs/docs/v1/google
+cp -r docs/v1/google gloo-docs/docs/v1/google
 
 (cd gloo-docs && git add .)
 
