@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -60,7 +61,9 @@ func DeployTestRunner(namespace, image string, port int32) error {
 	}); err != nil {
 		return err
 	}
-	if err := WaitPodsRunning(time.Minute, time.Second, "gloo=testrunner"); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	if err := WaitPodsRunning(ctx, time.Second, "gloo=testrunner"); err != nil {
 		return err
 	}
 	go func() {
