@@ -18,6 +18,8 @@ function kind-env {
     echo export CLUSTER_NAME=$CLUSTER_NAME
     echo export KUBECONFIG="$(kind get kubeconfig-path --name="$CLUSTER_NAME")"
     echo export KIND_CONTAINER_ID=$(docker ps |grep kindest/node |grep $CLUSTER_NAME | cut -f1 -d' ')
+    echo "# To use, run:"
+    echo "# eval \$($0 kind-env)"
 }
 
 function runtests {
@@ -52,5 +54,6 @@ case "$1" in
 *)
     echo "choose one of: kind-env,start,cleanup,runtests,testall"
     echo "After the first time you run runtests, consider setting SKIP_BUILD=1"
+    echo "If you want the test e2e to stop on failure, WAIT_ON_FAIL=1"
     ;;
 esac
