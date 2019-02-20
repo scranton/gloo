@@ -62,7 +62,7 @@ func DeployTestRunner(namespace, image string, port int32) error {
 	}); err != nil {
 		return err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	if err := WaitPodsRunning(ctx, time.Second, "gloo=testrunner"); err != nil {
 		return err
