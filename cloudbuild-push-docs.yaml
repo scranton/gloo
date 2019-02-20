@@ -1,0 +1,19 @@
+steps:
+
+- name: 'gcr.io/$PROJECT_ID/go-make'
+  args: ['push-docs']
+  env:
+  - 'TAGGED_VERSION=$TAG_NAME'
+  - 'PROJECT_ROOT=github.com/solo-io/gloo'
+  - 'GOPATH=/workspace/gopath'
+  - 'HELM_HOME=/root/.helm' # tell helm where to find data
+  dir: './gopath/src/github.com/solo-io/gloo'
+  secretEnv: ['GITHUB_TOKEN']
+  id: 'push-docs'
+
+secrets:
+- kmsKeyName: projects/solo-public/locations/global/keyRings/build/cryptoKeys/build-key
+  secretEnv:
+    GITHUB_TOKEN: CiQABlzmSRpjt9c2jcCGU2lIk68qAkHIzIHUeYS+artlcens/7oSUQCCPGSG407g5usGvAhM+oL98Xir0fHWUiNe3827h9zdhmkCbrZpNqfVFkMhAxQ/ZlhC31+KwzWoHnDSb3RN7CoKj+gves6q7MMf7wNxSmC46A==
+
+timeout: 6600s
