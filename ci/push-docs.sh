@@ -26,28 +26,28 @@ git config --global user.name "soloio-bot"
 (cd gloo-docs && git checkout -b $branch)
 
 # Gloo
-if [ -d "gloo-docs/docs/v1/github.com/solo-io/gloo" ]; then
-	rm -r gloo-docs/docs/v1/github.com/solo-io/gloo
+if [ -d "gloo-docs/gloo/docs/v1/github.com/solo-io/gloo" ]; then
+	rm -r gloo-docs/gloo/docs/v1/github.com/solo-io/gloo
 fi
-cp -r docs/v1/github.com/solo-io/gloo gloo-docs/docs/v1/github.com/solo-io/gloo
+cp -r docs/v1/github.com/solo-io/gloo gloo-docs/gloo/docs/v1/github.com/solo-io/gloo
 
 # Solo Kit
-if [ -d "gloo-docs/docs/v1/github.com/solo-io/solo-kit" ]; then
-	rm -r gloo-docs/docs/v1/github.com/solo-io/solo-kit
+if [ -d "gloo-docs/gloo/docs/v1/github.com/solo-io/solo-kit" ]; then
+	rm -r gloo-docs/gloo/docs/v1/github.com/solo-io/solo-kit
 fi
-cp -r docs/v1/github.com/solo-io/solo-kit gloo-docs/docs/v1/github.com/solo-io/solo-kit
+cp -r docs/v1/github.com/solo-io/solo-kit gloo-docs/gloo/docs/v1/github.com/solo-io/solo-kit
 
 # Gogoproto
-if [ -d "gloo-docs/docs/v1/gogoproto" ]; then
-	rm -r gloo-docs/docs/v1/gogoproto
+if [ -d "gloo-docs/gloo/docs/v1/gogoproto" ]; then
+	rm -r gloo-docs/gloo/docs/v1/gogoproto
 fi
-cp -r docs/v1/gogoproto gloo-docs/docs/v1/gogoproto
+cp -r docs/v1/gogoproto gloo-docs/gloo/docs/v1/gogoproto
 
 # Google
-if [ -d "gloo-docs/docs/v1/google" ]; then
-	rm -r gloo-docs/docs/v1/google
+if [ -d "gloo-docs/gloo/docs/v1/google" ]; then
+	rm -r gloo-docs/gloo/docs/v1/google
 fi
-cp -r docs/v1/google gloo-docs/docs/v1/google
+cp -r docs/v1/google gloo-docs/gloo/docs/v1/google
 
 (cd gloo-docs && git add .)
 
