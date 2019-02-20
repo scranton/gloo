@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -144,18 +145,20 @@ var glooPodLabels = []string{
 }
 
 func WaitGlooPods(timeout, interval time.Duration) error {
-	if err := WaitPodsRunning(timeout, interval, glooPodLabels...); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if err := WaitPodsRunning(ctx, interval, glooPodLabels...); err != nil {
 		return err
 	}
 	return nil
 }
 
-func WaitPodsRunning(timeout, interval time.Duration, labels ...string) error {
+func WaitPodsRunning(ctx context.Context, interval time.Duration, labels ...string) error {
 	finished := func(output string) bool {
 		return strings.Contains(output, "Running") || strings.Contains(output, "ContainerCreating")
 	}
 	for _, label := range labels {
-		if err := WaitPodStatus(timeout, interval, label, "Running", finished); err != nil {
+		if err := WaitPodStatus(ctx, interval, label, "Running", finished); err != nil {
 			return err
 		}
 	}
@@ -163,32 +166,32 @@ func WaitPodsRunning(timeout, interval time.Duration, labels ...string) error {
 		return strings.Contains(output, "Running")
 	}
 	for _, label := range labels {
-		if err := WaitPodStatus(timeout, interval, label, "Running", finished); err != nil {
+		if err := WaitPodStatus(ctx, interval, label, "Running", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodsTerminated(timeout, interval time.Duration, labels ...string) error {
+func WaitPodsTerminated(ctx context.Context, interval time.Duration, labels ...string) error {
 	for _, label := range labels {
 		finished := func(output string) bool {
 			return !strings.Contains(output, label)
 		}
-		if err := WaitPodStatus(timeout, interval, label, "terminated", finished); err != nil {
+		if err := WaitPodStatus(ctx, interval, label, "terminated", finished); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func WaitPodStatus(timeout, interval time.Duration, label, status string, finished func(output string) bool) error {
+func WaitPodStatus(ctx context.Context, interval time.Duration, label, status string, finished func(output string) bool) error {
 	tick := time.Tick(interval)
-
-	log.Debugf("waiting %v for pod %v to be %v...", timeout, label, status)
+	d, _ := ctx.Deadline()
+	log.Debugf("waiting till %v for pod %v to be %v...", d, label, status)
 	for {
 		select {
-		case <-time.After(timeout):
+		case <-ctx.Done():
 			return fmt.Errorf("timed out waiting for %v to be %v", label, status)
 		case <-tick:
 			out, err := setup.KubectlOut("get", "pod", "-l", label)
