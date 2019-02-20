@@ -20,7 +20,7 @@ branch="docs-gloo-$tag"
 set +x
 echo "Cloning gloo-docs repo"
 git clone https://soloio-bot:$github_token_no_spaces@github.com/solo-io/gloo-docs.git
-set -x
+[ "$TRACE" ] && set -x
 
 git config --global user.name "soloio-bot"
 (cd gloo-docs && git checkout -b $branch)
