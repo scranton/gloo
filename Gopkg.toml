@@ -24,7 +24,7 @@
 
 [[constraint]]
   name = "github.com/solo-io/solo-kit"
-  version = "0.2.26"
+  version = "0.2.28"
 
 [[constraint]]
   name = "github.com/solo-io/go-utils"
@@ -69,3 +69,7 @@
 [[override]]
   name = "k8s.io/apiserver"
   version = "kubernetes-1.13.1"
+
+[[override]]
+  name = "k8s.io/helm"
+  version = "v2.12.3"

@@ -277,6 +277,7 @@ build: gloo glooctl gateway discovery envoyinit ingress
 
 HELM_SYNC_DIR := $(OUTPUT_DIR)/helm
 HELM_DIR := install/helm
+INSTALL_NAMESPACE ?= gloo-system
 
 .PHONY: manifest
 manifest: prepare-helm install/gloo-gateway.yaml install/gloo-knative.yaml update-helm-chart
@@ -292,7 +293,7 @@ ifeq ($(RELEASE),"true")
 	helm repo index $(HELM_SYNC_DIR)
 endif
 
-HELMFLAGS := --namespace gloo-system --set namespace.create=true
+HELMFLAGS := --namespace $(INSTALL_NAMESPACE) --set namespace.create=true
 
 install/gloo-gateway.yaml: prepare-helm
 	helm template install/helm/gloo $(HELMFLAGS) > $@
@@ -347,6 +348,12 @@ ifeq ($(RELEASE),"true")
 	ci/push-docs.sh tag=$(TAGGED_VERSION)
 	@$(foreach BINARY,$(RELEASE_BINARIES),ci/upload-github-release-asset.sh owner=solo-io repo=gloo tag=$(TAGGED_VERSION) filename=$(BINARY) sha=TRUE;)
 	@$(foreach YAML,$(RELEASE_YAMLS),ci/upload-github-release-asset.sh owner=solo-io repo=gloo tag=$(TAGGED_VERSION) filename=$(YAML);)
+endif
+
+.PHONY: push-docs
+push-docs:
+ifeq ($(RELEASE),"true")
+	ci/push-docs.sh tag=$(TAGGED_VERSION)
 endif
 
 #----------------------------------------------------------------------------------
