@@ -17,7 +17,7 @@ done
 github_token_no_spaces=$(echo $GITHUB_TOKEN | tr -d '[:space:]')
 branch="docs-gloo-$tag"
 
-git clone https://github.com/solo-io/gloo-docs.git
+git clone https://soloio-bot:$github_token_no_spaces@github.com/solo-io/gloo-docs.git
 git config --global user.name "soloio-bot"
 (cd gloo-docs && git checkout -b $branch)
 
