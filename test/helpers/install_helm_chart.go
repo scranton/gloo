@@ -73,27 +73,50 @@ settings:
   # the namespace that Gloo should write discovery data (Upstreams)
   writeNamespace: {{ .Namespace }}
 
-deployment:
-  imagePullPolicy: IfNotPresent
-  gloo:
+gloo:
+  deployment:
+    image:
+      repository: soloio/gloo
+      tag: {{ .Version }}
+      pullPolicy: Never
+    replicas: 1
     xdsPort: 9977
-    image: soloio/gloo:{{ .Version }}
+discovery:
+  deployment:
+    image:
+      repository: soloio/discovery
+      tag: {{ .Version }}
+      pullPolicy: Never
     replicas: 1
-  discovery:
-    image: soloio/discovery:{{ .Version }}
+gateway:
+  deployment:
+    image:
+      repository: soloio/gateway
+      tag: {{ .Version }}
+      pullPolicy: Never
     replicas: 1
-  gateway:
-    image: soloio/gateway:{{ .Version }}
-    replicas: 1
-  gatewayProxy:
-    image: soloio/gloo-envoy-wrapper:{{ .Version }}
+gatewayProxy:
+  deployment:
+    image:
+      repository: soloio/gloo-envoy-wrapper
+      tag: {{ .Version }}
+      pullPolicy: Never
     httpPort: 8080
+    httpsPort: 8443
     replicas: 1
-  ingress:
-    image: soloio/ingress:{{ .Version }}
+ingress:
+  deployment:
+    image:
+      repository: soloio/ingress
+      tag: {{ .Version }}
+      pullPolicy: Never
     replicas: 1
-  ingressProxy:
-    image: soloio/gloo-envoy-wrapper:{{ .Version }}
+ingressProxy:
+  deployment:
+    image:
+      repository: soloio/gloo-envoy-wrapper
+      tag: {{ .Version }}
+      pullPolicy: Never
     httpPort: 80
     httpsPort: 443
     replicas: 1
