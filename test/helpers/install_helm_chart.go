@@ -81,6 +81,7 @@ gloo:
       tag: {{ .Version }}
       pullPolicy: Never
     replicas: 1
+    stats: true
     xdsPort: 9977
 discovery:
   deployment:
@@ -89,6 +90,7 @@ discovery:
       tag: {{ .Version }}
       pullPolicy: Never
     replicas: 1
+    stats: true
 gateway:
   deployment:
     image:
@@ -96,6 +98,7 @@ gateway:
       tag: {{ .Version }}
       pullPolicy: Never
     replicas: 1
+    stats: true
 gatewayProxy:
   deployment:
     image:
