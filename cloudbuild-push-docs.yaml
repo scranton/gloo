@@ -1,3 +1,6 @@
+# can be used to test the docs push locally
+# gcloud builds submit . --config cloudbuild-push-docs.yaml --substitutions TAG_NAME=v0.7.3
+
 steps:
 # Can create a dep cache by running 'gcloud builds submit . --config=cloudbuild-cache.yaml'
 # These two steps should populate the cache
