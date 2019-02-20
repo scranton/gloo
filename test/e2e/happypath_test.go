@@ -279,7 +279,18 @@ var _ = Describe("Happypath", func() {
 			})
 
 			It("watch all namespaces", func() {
-				Eventually(getUpstream, "10s", "0.5s").ShouldNot(BeNil())
+				Eventually(getStatus, "10s", "0.5s").Should(Equal(core.Status_Accepted))
+
+				up, err := getUpstream()
+				Expect(err).NotTo(HaveOccurred())
+
+				proxycli := testClients.ProxyClient
+				proxy := getTrivialProxyForUpstream(namespace, envoyPort, up.Metadata.Ref())
+				var opts clients.WriteOpts
+				_, err = proxycli.Write(proxy, opts)
+				Expect(err).NotTo(HaveOccurred())
+
+				TestUpstremReachable()
 			})
 		})
 
