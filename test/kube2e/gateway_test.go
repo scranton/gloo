@@ -23,13 +23,33 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/clients/kube"
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 var _ = Describe("Kube2e: gateway", func() {
-	It("works", func() {
-		cfg, err := kubeutils.GetConfig("", "")
+
+	var (
+		ctx        context.Context
+		cancel     context.CancelFunc
+		namespace  string
+		cfg        *rest.Config
+		kubeClient kubernetes.Interface
+
+		gatewayClient        v1.GatewayClient
+		virtualServiceClient v1.VirtualServiceClient
+	)
+
+	BeforeEach(func() {
+		ctx, cancel = context.WithCancel(context.Background())
+
+		var err error
+		cfg, err = kubeutils.GetConfig("", "")
 		Expect(err).NotTo(HaveOccurred())
-		cache := kube.NewKubeCache(context.TODO())
+
+		kubeClient, err = kubernetes.NewForConfig(cfg)
+		Expect(err).NotTo(HaveOccurred())
+
+		cache := kube.NewKubeCache(ctx)
 		gatewayClientFactory := &factory.KubeResourceClientFactory{
 			Crd:         v1.GatewayCrd,
 			Cfg:         cfg,
@@ -41,13 +61,21 @@ var _ = Describe("Kube2e: gateway", func() {
 			SharedCache: cache,
 		}
 
-		gatewayClient, err := v1.NewGatewayClient(gatewayClientFactory)
+		gatewayClient, err = v1.NewGatewayClient(gatewayClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
-		virtualServiceClient, err := v1.NewVirtualServiceClient(virtualServiceClientFactory)
+		virtualServiceClient, err = v1.NewVirtualServiceClient(virtualServiceClientFactory)
 		Expect(err).NotTo(HaveOccurred())
 
-		_, err = virtualServiceClient.Write(&v1.VirtualService{
+	})
+
+	AfterEach(func() {
+		cancel()
+	})
+
+	It("works", func() {
+
+		_, err := virtualServiceClient.Write(&v1.VirtualService{
 
 			Metadata: core.Metadata{
 				Name:      "vs",
@@ -93,97 +121,77 @@ var _ = Describe("Kube2e: gateway", func() {
 			Port:     gatewayPort,
 		}, helpers.SimpleHttpResponse, time.Minute)
 	})
+	Context("native ssl ", func() {
+		BeforeEach(func() {
+			// get the certificate so it is generated in the background
+			go Certificate()
+		})
 
-	FIt("works with ssl", func() {
-		// get the certificate so it is generated in the background
-		go Certificate()
+		It("works with ssl", func() {
+			createdSecret, err := kubeClient.CoreV1().Secrets(namespace).Create(GetKubeSecret("secret", namespace))
+			Expect(err).NotTo(HaveOccurred())
 
-		cfg, err := kubeutils.GetConfig("", "")
-		Expect(err).NotTo(HaveOccurred())
-		cache := kube.NewKubeCache(context.TODO())
-		gatewayClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         v1.GatewayCrd,
-			Cfg:         cfg,
-			SharedCache: cache,
-		}
-		virtualServiceClientFactory := &factory.KubeResourceClientFactory{
-			Crd:         v1.VirtualServiceCrd,
-			Cfg:         cfg,
-			SharedCache: cache,
-		}
+			_, err = virtualServiceClient.Write(&v1.VirtualService{
 
-		gatewayClient, err := v1.NewGatewayClient(gatewayClientFactory)
-		Expect(err).NotTo(HaveOccurred())
-
-		virtualServiceClient, err := v1.NewVirtualServiceClient(virtualServiceClientFactory)
-		Expect(err).NotTo(HaveOccurred())
-
-		kubeClient, err := kubernetes.NewForConfig(cfg)
-		Expect(err).NotTo(HaveOccurred())
-
-		createdSecret, err := kubeClient.CoreV1().Secrets(namespace).Create(GetKubeSecret("secret", namespace))
-		Expect(err).NotTo(HaveOccurred())
-
-		_, err = virtualServiceClient.Write(&v1.VirtualService{
-
-			Metadata: core.Metadata{
-				Name:      "vs",
-				Namespace: namespace,
-			},
-			SslConfig: &gloov1.SslConfig{
-				SslSecrets: &gloov1.SslConfig_SecretRef{
-					SecretRef: &core.ResourceRef{
-						Name:      createdSecret.ObjectMeta.Name,
-						Namespace: createdSecret.ObjectMeta.Namespace,
-					},
+				Metadata: core.Metadata{
+					Name:      "vs",
+					Namespace: namespace,
 				},
-			},
-			VirtualHost: &gloov1.VirtualHost{
-				Name:    "default",
-				Domains: []string{"*"},
-				Routes: []*gloov1.Route{{
-					Matcher: &gloov1.Matcher{
-						PathSpecifier: &gloov1.Matcher_Prefix{
-							Prefix: "/",
+				SslConfig: &gloov1.SslConfig{
+					SslSecrets: &gloov1.SslConfig_SecretRef{
+						SecretRef: &core.ResourceRef{
+							Name:      createdSecret.ObjectMeta.Name,
+							Namespace: createdSecret.ObjectMeta.Namespace,
 						},
 					},
-					Action: &gloov1.Route_RouteAction{
-						RouteAction: &gloov1.RouteAction{
-							Destination: &gloov1.RouteAction_Single{
-								Single: &gloov1.Destination{
-									Upstream: core.ResourceRef{Namespace: namespace, Name: fmt.Sprintf("%s-%s-%v", namespace, "testrunner", testRunnerPort)},
+				},
+				VirtualHost: &gloov1.VirtualHost{
+					Name:    "default",
+					Domains: []string{"*"},
+					Routes: []*gloov1.Route{{
+						Matcher: &gloov1.Matcher{
+							PathSpecifier: &gloov1.Matcher_Prefix{
+								Prefix: "/",
+							},
+						},
+						Action: &gloov1.Route_RouteAction{
+							RouteAction: &gloov1.RouteAction{
+								Destination: &gloov1.RouteAction_Single{
+									Single: &gloov1.Destination{
+										Upstream: core.ResourceRef{Namespace: namespace, Name: fmt.Sprintf("%s-%s-%v", namespace, "testrunner", testRunnerPort)},
+									},
 								},
 							},
 						},
-					},
-				}},
-			},
-		}, clients.WriteOpts{})
-		Expect(err).NotTo(HaveOccurred())
+					}},
+				},
+			}, clients.WriteOpts{})
+			Expect(err).NotTo(HaveOccurred())
 
-		defaultGateway := defaults.DefaultGateway(namespace)
-		// wait for default gateway to be created
-		Eventually(func() (*v1.Gateway, error) {
-			return gatewayClient.Read(namespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
-		}, "5s", "0.5s").Should(Not(BeNil()))
+			defaultGateway := defaults.DefaultGateway(namespace)
+			// wait for default gateway to be created
+			Eventually(func() (*v1.Gateway, error) {
+				return gatewayClient.Read(namespace, defaultGateway.Metadata.Name, clients.ReadOpts{})
+			}, "5s", "0.5s").Should(Not(BeNil()))
 
-		gatewayProxy := "gateway-proxy"
-		gatewayPort := int(80)
-		cafile := ToFile(Certificate())
-		defer os.Remove(cafile)
+			gatewayProxy := "gateway-proxy"
+			gatewayPort := int(80)
+			cafile := ToFile(Certificate())
+			defer os.Remove(cafile)
 
-		err = setup.Kubectl("cp", cafile, namespace+"/testrunner:/tmp/ca.crt")
-		Expect(err).NotTo(HaveOccurred())
+			err = setup.Kubectl("cp", cafile, namespace+"/testrunner:/tmp/ca.crt")
+			Expect(err).NotTo(HaveOccurred())
 
-		setup.CurlEventuallyShouldRespond(setup.CurlOpts{
-			Protocol: "https",
-			Path:     "/",
-			Method:   "GET",
-			Host:     gatewayProxy,
-			Service:  gatewayProxy,
-			Port:     gatewayPort,
-			CaFile:   "/tmp/ca.crt",
-		}, helpers.SimpleHttpResponse, time.Minute)
+			setup.CurlEventuallyShouldRespond(setup.CurlOpts{
+				Protocol: "https",
+				Path:     "/",
+				Method:   "GET",
+				Host:     gatewayProxy,
+				Service:  gatewayProxy,
+				Port:     gatewayPort,
+				CaFile:   "/tmp/ca.crt",
+			}, helpers.SimpleHttpResponse, time.Minute)
+		})
 	})
 })
 
