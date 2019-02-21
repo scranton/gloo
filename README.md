@@ -15,7 +15,7 @@ Gloo is a feature-rich, Kubernetes-native ingress controller, and next-generatio
 &nbsp; [**Slack**](https://slack.solo.io) &nbsp; |
 &nbsp; [**Twitter**](https://twitter.com/soloio_inc)
 
-<BR><center><img src="docs/introduction/gloo_diagram.png" alt="Gloo Architecture" width="906"></center>
+<BR><center><img src="https://gloo.solo.io/introduction/gloo_diagram.png" alt="Gloo Architecture" width="906"></center>
 
 ## Summary
 
