@@ -1454,7 +1454,8 @@
   name = "github.com/solo-io/envoy-operator"
   packages = ["pkg/downward"]
   pruneopts = "UT"
-  revision = "v0.1.0"
+  revision = "c0c348560c668090e5a1977d100a3b974f77f789"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:699918466a9758902a14923851a7fbd230500f93da6982dae7c79959afb0a664"
