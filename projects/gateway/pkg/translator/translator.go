@@ -231,7 +231,7 @@ func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualSe
 		}
 	}
 	return &gloov1.Listener{
-		Name:        gateway.Metadata.Name,
+		Name:        fmt.Sprintf("listener-%s-%d", gateway.BindAddress, gateway.BindPort),
 		BindAddress: gateway.BindAddress,
 		BindPort:    gateway.BindPort,
 		ListenerType: &gloov1.Listener_HttpListener{
