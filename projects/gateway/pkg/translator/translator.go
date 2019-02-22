@@ -200,9 +200,16 @@ func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.Virtual
 			resourceErrs.AddError(gateway, err)
 			continue
 		}
-		virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
+		if gateway.Ssl == hasSsl(virtualService) {
+			virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
+		}
 	}
+
 	return virtualServicesForGateway
+}
+
+func hasSsl(vs *v1.VirtualService) bool {
+	return vs.SslConfig != nil
 }
 
 func desiredListener(gateway *v1.Gateway, virtualServicesForGateway v1.VirtualServiceList) *gloov1.Listener {
