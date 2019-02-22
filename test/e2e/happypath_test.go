@@ -333,18 +333,6 @@ var _ = Describe("Happypath", func() {
 				TestUpstremReachable()
 			})
 
-			It("should not remove ssl", func() {
-				up, err := getUpstream()
-				Expect(err).NotTo(HaveOccurred())
-
-				proxycli := testClients.ProxyClient
-				proxy := getTrivialProxyForUpstream(namespace, envoyPort, up.Metadata.Ref())
-				var opts clients.WriteOpts
-				_, err = proxycli.Write(proxy, opts)
-				Expect(err).NotTo(HaveOccurred())
-
-				TestUpstremReachable()
-			})
 		})
 
 		Context("all namespaces", func() {
