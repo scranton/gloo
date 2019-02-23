@@ -35,12 +35,30 @@ var _ = Describe("Translator", func() {
 						Metadata: core.Metadata{Namespace: ns, Name: "name"},
 						VirtualHost: &gloov1.VirtualHost{
 							Domains: []string{"d1.com"},
+							Routes: []*gloov1.Route{
+								{
+									Matcher: &gloov1.Matcher{
+										PathSpecifier: &gloov1.Matcher_Prefix{
+											Prefix: "/1",
+										},
+									},
+								},
+							},
 						},
 					},
 					{
 						Metadata: core.Metadata{Namespace: ns, Name: "name2"},
 						VirtualHost: &gloov1.VirtualHost{
 							Domains: []string{"d2.com"},
+							Routes: []*gloov1.Route{
+								{
+									Matcher: &gloov1.Matcher{
+										PathSpecifier: &gloov1.Matcher_Prefix{
+											Prefix: "/2",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -97,6 +115,31 @@ var _ = Describe("Translator", func() {
 		Expect(proxy.Listeners).To(HaveLen(2))
 	})
 
+	It("should not have vhosts with ssl", func() {
+		snap.VirtualServices[ns][0].SslConfig = new(gloov1.SslConfig)
+
+		proxy, errs := Translate(context.Background(), ns, snap)
+
+		Expect(errs.Validate()).NotTo(HaveOccurred())
+
+		Expect(proxy.Listeners).To(HaveLen(1))
+		listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
+		Expect(listener.VirtualHosts).To(HaveLen(1))
+	})
+
+	It("should not have vhosts without ssl", func() {
+		snap.Gateways[ns][0].Ssl = true
+		snap.VirtualServices[ns][0].SslConfig = new(gloov1.SslConfig)
+
+		proxy, errs := Translate(context.Background(), ns, snap)
+
+		Expect(errs.Validate()).NotTo(HaveOccurred())
+
+		Expect(proxy.Listeners).To(HaveLen(1))
+		listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
+		Expect(listener.VirtualHosts).To(HaveLen(1))
+	})
+
 	Context("merge", func() {
 		BeforeEach(func() {
 			snap.VirtualServices[ns][1].VirtualHost.Domains = snap.VirtualServices[ns][0].VirtualHost.Domains
@@ -148,12 +191,27 @@ var _ = Describe("Translator", func() {
 		It("should not error with one contains ssl config", func() {
 			snap.VirtualServices[ns][0].SslConfig = new(gloov1.SslConfig)
 
-			_, errs := Translate(context.Background(), ns, snap)
+			proxy, errs := Translate(context.Background(), ns, snap)
 
 			Expect(errs.Validate()).NotTo(HaveOccurred())
+			listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
+			Expect(listener.VirtualHosts).To(HaveLen(0))
+		})
+
+		It("should not error with one contains ssl config", func() {
+			snap.Gateways[ns][0].Ssl = true
+			snap.VirtualServices[ns][0].SslConfig = new(gloov1.SslConfig)
+
+			proxy, errs := Translate(context.Background(), ns, snap)
+
+			Expect(errs.Validate()).NotTo(HaveOccurred())
+			listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
+			Expect(listener.VirtualHosts).To(HaveLen(1))
+			Expect(listener.VirtualHosts[0].Routes).To(HaveLen(2))
 		})
 
 		It("should error with both having ssl config", func() {
+			snap.Gateways[ns][0].Ssl = true
 			snap.VirtualServices[ns][0].SslConfig = new(gloov1.SslConfig)
 			snap.VirtualServices[ns][1].SslConfig = new(gloov1.SslConfig)
 

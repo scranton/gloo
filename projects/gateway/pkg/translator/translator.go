@@ -37,7 +37,7 @@ func Translate(ctx context.Context, namespace string, snap *v1.ApiSnapshot) (*gl
 
 		virtualServices := getVirtualServiceForGateway(gateway, snap.VirtualServices.List(), resourceErrs)
 		mergedVirtualServices := validateAndMergeVirtualServices(namespace, gateway, virtualServices, resourceErrs)
-
+		mergedVirtualServices = filterVirtualSeviceForGateway(gateway, mergedVirtualServices)
 		listener := desiredListener(gateway, mergedVirtualServices)
 		listeners = append(listeners, listener)
 	}
@@ -200,11 +200,19 @@ func getVirtualServiceForGateway(gateway *v1.Gateway, virtualServices v1.Virtual
 			resourceErrs.AddError(gateway, err)
 			continue
 		}
+		virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
+	}
+
+	return virtualServicesForGateway
+}
+
+func filterVirtualSeviceForGateway(gateway *v1.Gateway, virtualServices v1.VirtualServiceList) v1.VirtualServiceList {
+	var virtualServicesForGateway v1.VirtualServiceList
+	for _, virtualService := range virtualServices {
 		if gateway.Ssl == hasSsl(virtualService) {
 			virtualServicesForGateway = append(virtualServicesForGateway, virtualService)
 		}
 	}
-
 	return virtualServicesForGateway
 }
 
