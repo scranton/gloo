@@ -32,7 +32,7 @@ var _ = Describe("Translator", func() {
 			VirtualServices: v1.VirtualServicesByNamespace{
 				ns: v1.VirtualServiceList{
 					{
-						Metadata: core.Metadata{Namespace: ns, Name: "name"},
+						Metadata: core.Metadata{Namespace: ns, Name: "name1"},
 						VirtualHost: &gloov1.VirtualHost{
 							Domains: []string{"d1.com"},
 							Routes: []*gloov1.Route{
@@ -105,7 +105,7 @@ var _ = Describe("Translator", func() {
 	})
 
 	It("should translate two gateways with to one proxy with the same name", func() {
-		snap.Gateways[ns] = append(snap.Gateways[ns], &v1.Gateway{Metadata: core.Metadata{Namespace: ns, Name: "name"}})
+		snap.Gateways[ns] = append(snap.Gateways[ns], &v1.Gateway{Metadata: core.Metadata{Namespace: ns, Name: "name2"}})
 
 		proxy, errs := Translate(context.Background(), ns, snap)
 
@@ -125,6 +125,7 @@ var _ = Describe("Translator", func() {
 		Expect(proxy.Listeners).To(HaveLen(1))
 		listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 		Expect(listener.VirtualHosts).To(HaveLen(1))
+		Expect(listener.VirtualHosts[0].Name).To(ContainSubstring("name2"))
 	})
 
 	It("should not have vhosts without ssl", func() {
@@ -138,6 +139,7 @@ var _ = Describe("Translator", func() {
 		Expect(proxy.Listeners).To(HaveLen(1))
 		listener := proxy.Listeners[0].ListenerType.(*gloov1.Listener_HttpListener).HttpListener
 		Expect(listener.VirtualHosts).To(HaveLen(1))
+		Expect(listener.VirtualHosts[0].Name).To(ContainSubstring("name1"))
 	})
 
 	Context("merge", func() {
