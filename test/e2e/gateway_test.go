@@ -16,7 +16,7 @@ import (
 	"github.com/solo-io/solo-kit/pkg/api/v1/resources/core"
 )
 
-var _ = Describe("Happypath", func() {
+var _ = Describe("Gateway", func() {
 
 	var (
 		ctx            context.Context
