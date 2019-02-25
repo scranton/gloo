@@ -144,11 +144,15 @@ func TestUpstremReachable(envoyPort uint32, tu *TestUpstream, rootca *string) {
 		if rootca != nil {
 			scheme = "https"
 			caCertPool := x509.NewCertPool()
-			caCertPool.AppendCertsFromPEM([]byte(*rootca))
+			ok := caCertPool.AppendCertsFromPEM([]byte(*rootca))
+			if !ok {
+				return fmt.Errorf("ca cert is not OK")
+			}
 
 			client.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{
-					RootCAs: caCertPool,
+					RootCAs:            caCertPool,
+					InsecureSkipVerify: true,
 				},
 			}
 		}
