@@ -29,7 +29,7 @@ func RootCmd(opts *options.EditOptions, optionsFunc ...cliutils.OptionsFunc) *co
 		Use:     constants.UPSTREAM_COMMAND.Use,
 		Aliases: constants.UPSTREAM_COMMAND.Aliases,
 		Short:   "read an upstream or list upstreams in a namespace",
-		Long:    "usage: glooctl edit upstream [NAME] [--namespace=namespace] [-o FORMAT] [-o FORMAT]",
+		Long:    "usage: glooctl edit upstream [NAME] [--namespace=namespace]",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Top.Interactive {
 				if err := addEditUpstreamInteractiveFlags(optsExt); err != nil {
