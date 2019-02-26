@@ -92,12 +92,16 @@ func editUpstream(opts *options.EditOptions, optsExt *EditUpstream, args []strin
 		if up.UpstreamSpec.SslConfig == nil {
 			up.UpstreamSpec.SslConfig = &gloov1.UpstreamSslConfig{}
 		}
-		if optsExt.SslSecretRef.Name != "" {
+
+		hasBoth := (optsExt.SslSecretRef.Name != "") && (optsExt.SslSecretRef.Namespace != "")
+		hasNone := (optsExt.SslSecretRef.Name == "") && (optsExt.SslSecretRef.Namespace == "")
+
+		if hasBoth {
 			up.UpstreamSpec.SslConfig.SslSecrets = &gloov1.UpstreamSslConfig_SecretRef{
 				SecretRef: &optsExt.SslSecretRef,
 			}
-		} else if optsExt.SslSecretRef.Namespace != "" {
-			return fmt.Errorf("ssl secret ref name was not provided")
+		} else if !hasNone {
+			return fmt.Errorf("both --ssl-secret-name and --ssl-secret-namespace must be provided")
 		}
 		if optsExt.Sni != "" {
 			up.UpstreamSpec.SslConfig.Sni = optsExt.Sni

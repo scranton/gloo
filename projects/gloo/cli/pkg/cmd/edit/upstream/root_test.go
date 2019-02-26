@@ -104,10 +104,16 @@ var _ = Describe("Root", func() {
 				Expect(err.Error()).To(Equal("conflict - resource version does not match"))
 			})
 
+			It("should not create a secret ref with just a name", func() {
+				err := testutils.Glooctl("edit upstream --name up --namespace gloo-system --ssl-secret-name sslname")
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(Equal("both --ssl-secret-name and --ssl-secret-namespace must be provided"))
+			})
+
 			It("should not create a secret ref with just a namespace", func() {
 				err := testutils.Glooctl("edit upstream --name up --namespace gloo-system --ssl-secret-namespace sslnamespace")
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("ssl secret ref name was not provided"))
+				Expect(err.Error()).To(Equal("both --ssl-secret-name and --ssl-secret-namespace must be provided"))
 			})
 
 			It("should fail on bad upstream", func() {
