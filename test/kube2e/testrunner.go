@@ -32,7 +32,7 @@ func deployTestRunner(namespace, image string, port int32) error {
 		return err
 	}
 	labels := map[string]string{"gloo": "testrunner"}
-	one := int64(1)
+	zero := int64(0)
 	if _, err := kube.CoreV1().Pods(namespace).Create(&v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "testrunner",
@@ -41,7 +41,7 @@ func deployTestRunner(namespace, image string, port int32) error {
 			Labels: labels,
 		},
 		Spec: v1.PodSpec{
-			TerminationGracePeriodSeconds: &one,
+			TerminationGracePeriodSeconds: &zero,
 			Containers: []v1.Container{
 				{
 					Image:           image,

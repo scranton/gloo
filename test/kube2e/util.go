@@ -83,6 +83,11 @@ func GlooctlUninstall(namespace string) error {
 	if err != nil {
 		return err
 	}
+	// ignore error in case it is already deleted.
+	helpers.RunCommand(true,
+		"kubectl", "delete", "pod",
+		"-n", namespace,
+		"testrunner", "--grace-period=0")
 
 	EventuallyWithOffset(1, func() error {
 		return helpers.RunCommand(false,
