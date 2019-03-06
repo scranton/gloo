@@ -42,6 +42,6 @@ The below table contains the environment variables that can be used to configure
 ./hack/test.sh start
 eval $(./hack/test.sh kind-env)
 make build-kind-assets
-export RUN_KUBE2E_TESTS=y
+export RUN_KUBE2E_TESTS=1
 ginkgo -r test/kube2e/
 ```
